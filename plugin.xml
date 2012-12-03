@@ -1,4 +1,4 @@
-<plugin name='bates' version='0.8' grailsVersion='2.1 &gt; *'>
+<plugin name='bates' version='0.19' grailsVersion='2.1 &gt; *'>
   <author>Michael Salera</author>
   <authorEmail>mikesalera@mac.com</authorEmail>
   <title>Business Audit Trail Events System (BATES) Plugin</title>

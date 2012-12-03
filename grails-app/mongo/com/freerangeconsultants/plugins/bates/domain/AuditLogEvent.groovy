@@ -20,7 +20,7 @@ class AuditLogEvent implements Serializable, Comparable {
   String persistedObjectId
   Map<String, String> oldState
   Map<String, String> newState
-  Date dateCreated = new Date()
+  Date dateCreated
 
 
   //METHODS
@@ -37,4 +37,12 @@ class AuditLogEvent implements Serializable, Comparable {
   }
 
   int compareTo(java.lang.Object anObject) { return id.compareTo(anObject.id) }
+
+  static constraints = {
+    eventName(nullable:false)
+    className(nullable:false)
+    persistedObjectId(nullable:false)
+    oldState(nullable: true)
+    newState(nullable: true)
+  }
 }

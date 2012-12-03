@@ -1,7 +1,10 @@
 package com.freerangeconsultants.plugins.bates.listeners
 
+
+import grails.util.GrailsUtil
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.EntityAccess;
@@ -9,6 +12,8 @@ import org.grails.datastore.mapping.engine.event.*;
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEventListener
 import org.grails.datastore.mapping.model.PersistentEntity;
+
+import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationEvent
 
 import com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService
@@ -43,58 +48,55 @@ class BusinessAuditLogListener extends AbstractPersistenceEventListener {
      }
 
 @Override
-protected void onPersistenceEvent(final AbstractPersistenceEvent event) {
-//    handleEvent(event)
-    switch(event.eventType) {
-        case EventType.PostInsert:
-	     println ''
-	     println this.class.name + "  Got a Persistence event!"
-            println "POST INSERT ${event.entityObject}"
-        break
-
-        case EventType.PreUpdate:
-	     println ''
-	     println this.class.name + "  Got a Persistence event!"
-            println "POST UPDATE ${event.entityObject}"
-        break;
-
-        case EventType.PreDelete:
-     	     println ''	
-	     println this.class.name + "  Got a Persistence event!"
-            println "POST DELETE ${event.entityObject}"
-	    
-    }
+protected void onPersistenceEvent(AbstractPersistenceEvent event) {
+    handleEvent(event)
 }
 
-  def handleEvent(final AbstractPersistenceEvent event) {
-    def businessAuditLogService = getBeanFromApplicationContext("businessAuditLogService")
+  def handleEvent(AbstractPersistenceEvent event) {
+    def businessAuditLogService = ContextUtils.getBeanFromApplicationContext("businessAuditLogService")
 
     def String className = null
     def Object persistedObjectId = null
     def oldState = null // for UPDATES
     def newState = null
 
-    //skip if test mode
-    if (!GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_TEST) && isAuditableEntity(event?.entityObject)) {
-        className = event?.entityObject?.class.name
-        persistedObjectId = event?.entityObject?.id?.toString()
+    // gotta have entity or entityName
+    if (!event?.entityObject) { return false }
 
-// switch event.eventType
-        if (eventName == 'onPostInsert') {
-          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
+    //skip if test mode
+    if (!GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_TEST)) {
+        className = event?.entityObject?.class.name ?: 'Category'
+        persistedObjectId = event?.entityObject?.id?.toString() ?: 1
+
+    switch(event.eventType) {
+        case EventType.PostInsert:
+	     println ''
+	     println this.class.name + "  Got a Persistence event!"
+            println "POST INSERT ${event.entityObject}"
+//          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
           businessAuditLogService.recordLogEvent('insert', className, persistedObjectId, null, newState)
-        }
-        else if (eventName == 'onPreUpdate') {
-          oldState = getStateMap(event?.persister?.propertyNames, event?.getOldState())
-          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
+
+        break
+
+        case EventType.PreUpdate:
+	     println ''
+	     println this.class.name + "  Got a Persistence event!"
+            println "PRE UPDATE ${event.entityObject}"
+//          oldState = getStateMap(event?.persister?.propertyNames, event?.getOldState())
+//          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
           businessAuditLogService.recordLogEvent('update', className, persistedObjectId, oldState, newState)
-        }
-        else if (eventName == 'onPreDelete') {
-          oldState = getStateMap(event?.persister?.propertyNames, event?.getDeletedState())
+        break;
+
+        case EventType.PreDelete:
+     	     println ''	
+	     println this.class.name + "  Got a Persistence event!"
+            println "PRE DELETE ${event.entityObject}"
+//          oldState = getStateMap(event?.persister?.propertyNames, event?.getDeletedState())
           businessAuditLogService.recordLogEvent('delete', className, persistedObjectId, oldState, null)
-        }
-        else {
-          throw new IllegalArgumentException("Cannot support event: ${eventName}")
+	  break
+
+	default:
+          log.warn("Cannot support event: ${event.eventType}")
         }
     }
   }
@@ -130,4 +132,18 @@ protected void onPersistenceEvent(final AbstractPersistenceEvent event) {
     return aMap
   }
 
+}
+
+class ContextUtils {
+
+  def static getBeanFromApplicationContext(String beanName){
+    ApplicationContext ctx = (ApplicationContext)ApplicationHolder.getApplication().getMainContext()
+    def bean
+    try{
+      bean = ctx.getBean(beanName)
+    } catch (org.springframework.beans.factory.NoSuchBeanDefinitionException ex){
+      //do nothing. this just means the requested bean doesn't exist and the method will return null
+    }
+    return bean
+  }
 }
