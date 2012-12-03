@@ -1,9 +1,9 @@
 class BatesGrailsPlugin {
     // the plugin version
-    def version = "0.19"
+    def version = "0.20"
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.1 > *"
+    def grailsVersion = "2.0 > *"
 
     // the other plugins this plugin depends on
     def dependsOn = [mongodbMorphia: "0.8.2"]
