@@ -1,0 +1,38 @@
+<plugin name='bates' version='0.8' grailsVersion='2.1 &gt; *'>
+  <author>Michael Salera</author>
+  <authorEmail>mikesalera@mac.com</authorEmail>
+  <title>Business Audit Trail Events System (BATES) Plugin</title>
+  <description>Business Audit Trail Events System (BATES) is designed to take the load off the primary relational database (GORM dataSource) and allow fine-grained log events, 
+that is, changes to the records or documents themselves, and create these logs in MongoDB.  It is intended to be used across the enterprise, esp. if your 
+Mongo cluster is setup supporting sharding by Department or Application area/domain.
+
+Primary reason for writing Bates was not only to use the MongoDB backend, but also to provide similar features to Shawn Hartsock's excellent audit-logging plug-in,
+which was not upgraded to work with Grails 2.0 or above.  Though this may be done in a future release....
+
+Bates's job is to make audit trail simple, unobtrusive, yet powerful enough to be able to reconstruct should things go awry or front-end developers would like to 
+build an Admin style front end to view and filter thru all log documents, for example.
+
+(c) 2012 Mike Salera / FRC
+</description>
+  <documentation>http://grails.org/plugin/bates</documentation>
+  <type>BatesGrailsPlugin</type>
+  <resources>
+    <resource>com.freerangeconsultants.plugins.bates.domain.AuditLogEvent</resource>
+    <resource>com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService</resource>
+  </resources>
+  <repositories>
+    <repository name='grailsCentral' url='http://grails.org/plugins' />
+    <repository name='http://repo.grails.org/grails/core' url='http://repo.grails.org/grails/core/' />
+    <repository name='mavenCentral' url='http://repo1.maven.org/maven2/' />
+  </repositories>
+  <dependencies>
+    <build>
+      <dependency group='org.codehaus.gpars' name='gpars' version='1.0-beta-3' />
+    </build>
+  </dependencies>
+  <plugins />
+  <runtimePluginRequirements>
+    <plugin name='mongodbMorphia' version='0.8.2' />
+  </runtimePluginRequirements>
+  <behavior />
+</plugin>
