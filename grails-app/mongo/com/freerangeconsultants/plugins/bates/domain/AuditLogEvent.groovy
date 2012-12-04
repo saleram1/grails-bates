@@ -15,6 +15,8 @@ import groovy.transform.ToString
 @ToString
 class AuditLogEvent implements Serializable, Comparable {
 
+  String application
+  String region = "US"
   String eventName
   String className
   String persistedObjectId
