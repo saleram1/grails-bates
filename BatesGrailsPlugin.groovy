@@ -1,12 +1,13 @@
 class BatesGrailsPlugin {
     // the plugin version
-    def version = "0.20"
+    def version = "0.23"
 
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.0 > *"
 
     // the other plugins this plugin depends on
-    def dependsOn = [mongodbMorphia: "0.8.2"]
+    def dependsOn = [mongodbMorphia: "0.8.2",
+        hibernate: "2.1.1"]
 //	executor: "0.3"]
 
     // resources that are excluded from plugin packaging
@@ -58,19 +59,28 @@ build an Admin style front end to view and filter thru all log documents, for ex
         // TODO Implement additions to web.xml (optional), this event occurs before
     }
 
-    def doWithSpring = {
-      businessAuditLogService(com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService)
-    }
+def doWithSpring = {
+   businessAuditLogService(com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService)
+
+   auditListener(com.freerangeconsultants.plugins.bates.listeners.BusinessAuditLogListener)
+   hibernateEventListeners(org.codehaus.groovy.grails.orm.hibernate.HibernateEventListeners) {
+      listenerMap = ['post-insert': auditListener,
+                     'pre-update': auditListener,
+                     'pre-delete': auditListener]
+   }
+}
 
     def doWithDynamicMethods = { ctx ->
         // TODO Implement registering dynamic methods to classes (optional)
     }
 
+/*
     def doWithApplicationContext = { applicationContext ->
         application.mainContext.eventTriggeringInterceptor.datastores.each { k, datastore ->
     	    applicationContext.addApplicationListener(new com.freerangeconsultants.plugins.bates.listeners.BusinessAuditLogListener(datastore))
         }
     }
+*/
 
     def onChange = { event ->
         // TODO Implement code that is executed when any artefact that this plugin is

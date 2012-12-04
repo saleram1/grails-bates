@@ -1,23 +1,19 @@
 package com.freerangeconsultants.plugins.bates.listeners
 
+import com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService
 
 import grails.util.GrailsUtil
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.grails.datastore.mapping.core.Datastore
-import org.grails.datastore.mapping.engine.EntityAccess;
-import org.grails.datastore.mapping.engine.event.*;
-import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
-import org.grails.datastore.mapping.engine.event.AbstractPersistenceEventListener
-import org.grails.datastore.mapping.model.PersistentEntity;
-
+import org.hibernate.HibernateException
+import org.hibernate.cfg.Configuration
+import org.hibernate.collection.PersistentList
+import org.hibernate.collection.PersistentSet
+import org.hibernate.event.*
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationEvent
-
-import com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService
-
 
 /**
  * As of Grails 2.0 there is a new API for plugins and applications to register and listen for persistence events.
@@ -29,83 +25,98 @@ import com.freerangeconsultants.plugins.bates.core.BusinessAuditLogService
  *  @author Mike Salera
  *  @version 1.0
  */
-class BusinessAuditLogListener extends AbstractPersistenceEventListener {
-
-//     BusinessAuditLogService businessAuditLogService
-     Log LOG = LogFactory.getLog(BusinessAuditLogListener.class)
+//class BusinessAuditLogListener extends AbstractPersistenceEventListener {
 
 
-     public BusinessAuditLogListener(final Datastore dataStore) { 
-     	     super(dataStore)
-	     println this.class.name
-	     println "Running on: " + dataStore.class.name
+/**
+ * Or you could use the low-level Hibernate Events...
+ *  Complete list of listeners/events can be obtained at <tt>org.hibernate.event.EventListeners</tt>.
+ *
+ * @see org.hibernate.event.EventListeners
+ * @author Mike Salera, Shawn Hartsock
+ *
+ */
+class BusinessAuditLogListener
+  implements PostInsertEventListener, PreUpdateEventListener, PreDeleteEventListener, Initializable {
 
-     }
+  def Log LOG = LogFactory.getLog(BusinessAuditLogListener.class)
 
-     @Override
-     public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
-             return true
-     }
+  /**
+   * Log insertions made to the current model in the Audit Trail.
+   * new objects
+   *
+   * @param event
+   */
+  @Override
+  public void onPostInsert(PostInsertEvent event) {
+    handleEvent('onPostInsert', event)
+  }
 
-@Override
-protected void onPersistenceEvent(AbstractPersistenceEvent event) {
-    handleEvent(event)
-}
+  /**
+   * Log updates made to the current model in the Audit Trail.
+   * Return true if the operation should be vetoed
+   * @param event
+   */
+  @Override
+  public boolean onPreUpdate(PreUpdateEvent event) {
+    handleEvent('onPreUpdate', event)
+    return false
+  }
 
-  def handleEvent(AbstractPersistenceEvent event) {
-    def businessAuditLogService = ContextUtils.getBeanFromApplicationContext("businessAuditLogService")
+  /**
+   * Log deletions made to the current model in the the Audit Trail.
+   * Return true if the operation should be vetoed
+   * @param event
+   */
+  @Override
+  public boolean onPreDelete(PreDeleteEvent event) {
+    handleEvent('onPreDelete', event)
+    return false
+  }
+
+  def handleEvent(String eventName, event) {
+  LOG.info("handleEvent: ${eventName}")
+
+  def businessAuditLogService = ContextUtils.getBeanFromApplicationContext("businessAuditLogService")
 
     def String className = null
     def Object persistedObjectId = null
     def oldState = null // for UPDATES
     def newState = null
 
-    // gotta have entity or entityName
-    if (!event?.entityObject) { return false }
-
     //skip if test mode
-    if (!GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_TEST)) {
-        className = event?.entityObject?.class.name ?: 'Category'
-        persistedObjectId = event?.entityObject?.id?.toString() ?: 1
+    if (!GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_TEST) && isAuditableEntity(event?.entity)) {
+        className = event?.entity?.class.name
+        persistedObjectId = event?.entity?.id?.toString()
 
-    switch(event.eventType) {
-        case EventType.PostInsert:
-	     println ''
-	     println this.class.name + "  Got a Persistence event!"
-            println "POST INSERT ${event.entityObject}"
-//          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
+        if (eventName == 'onPostInsert') {
+          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
           businessAuditLogService.recordLogEvent('insert', className, persistedObjectId, null, newState)
-
-        break
-
-        case EventType.PreUpdate:
-	     println ''
-	     println this.class.name + "  Got a Persistence event!"
-            println "PRE UPDATE ${event.entityObject}"
-//          oldState = getStateMap(event?.persister?.propertyNames, event?.getOldState())
-//          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
+        }
+        else if (eventName == 'onPreUpdate') {
+          oldState = getStateMap(event?.persister?.propertyNames, event?.getOldState())
+          newState = getStateMap(event?.persister?.propertyNames, event?.getState())
           businessAuditLogService.recordLogEvent('update', className, persistedObjectId, oldState, newState)
-        break;
-
-        case EventType.PreDelete:
-     	     println ''	
-	     println this.class.name + "  Got a Persistence event!"
-            println "PRE DELETE ${event.entityObject}"
-//          oldState = getStateMap(event?.persister?.propertyNames, event?.getDeletedState())
+        }
+        else if (eventName == 'onPreDelete') {
+          oldState = getStateMap(event?.persister?.propertyNames, event?.getDeletedState())
           businessAuditLogService.recordLogEvent('delete', className, persistedObjectId, oldState, null)
-	  break
-
-	default:
-          log.warn("Cannot support event: ${event.eventType}")
+        }
+        else {
+          throw new IllegalArgumentException("Cannot support event: ${eventName}")
         }
     }
   }
 
-
-  Boolean isAuditableEntity(entity) {
-    entity?.metaClass.hasProperty(entity, 'auditable') && entity.auditable == Boolean.TRUE
+  @Override
+  public void initialize(Configuration cfg) {
+  LOG.info("initializing")
   }
 
+
+  def Boolean isAuditableEntity(entity) {
+    entity?.metaClass.hasProperty(entity, 'auditable') && entity?.auditable == Boolean.TRUE
+  }
 
   private def getStateMap(String[] names, Object[] state) {
     def map = [:]
@@ -117,13 +128,12 @@ protected void onPersistenceEvent(AbstractPersistenceEvent event) {
     sanitizeMap(map)
   }
 
-
   // propertyNames may have null values on the above call to put
   //create Map with no missing teeth
   private def sanitizeMap(aMap) {
     def entriesToBeRemoved = []
     aMap?.each { key, value ->
-      if (key && value) {
+      if (value != null && !(value instanceof PersistentSet) && !(value instanceof PersistentList)) {
         aMap[key] = value?.toString()
       }
       else { entriesToBeRemoved << key }
@@ -131,18 +141,18 @@ protected void onPersistenceEvent(AbstractPersistenceEvent event) {
     entriesToBeRemoved.each { key -> aMap.remove(key) }
     return aMap
   }
-
 }
+
 
 class ContextUtils {
 
   def static getBeanFromApplicationContext(String beanName){
-    ApplicationContext ctx = (ApplicationContext)ApplicationHolder.getApplication().getMainContext()
-    def bean
+    ApplicationContext ctx = ApplicationHolder.getApplication().getMainContext() as ApplicationContext
+
+    def bean = null
     try{
       bean = ctx.getBean(beanName)
-    } catch (org.springframework.beans.factory.NoSuchBeanDefinitionException ex){
-      //do nothing. this just means the requested bean doesn't exist and the method will return null
+    } catch (NoSuchBeanDefinitionException ex){
     }
     return bean
   }

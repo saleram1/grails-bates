@@ -2,7 +2,6 @@ package com.freerangeconsultants.plugins.bates.core
 
 import com.freerangeconsultants.plugins.bates.domain.AuditLogEvent
 
-
 /**
  * Log audit events from any persistence object to MongoDB sharded cluster
  *
@@ -19,7 +18,7 @@ class BusinessAuditLogService {
   /**
    * Use this method to return a list of the History of the given object id
    *
-   * @param clazz                 Class object for example of the Invoice.class
+   * @param clazz                 Class object
    * @param persistedObjectId     id of the object caller is looking for
    * @return
    */
@@ -42,10 +41,11 @@ class BusinessAuditLogService {
    */
   def recordLogEvent(String eventType, String className, persistedObjectId, oldeState, newState) {
     //magic of the dataStore
-    def auditEvent = new AuditLogEvent(eventName: eventType.toString(), className: className, persistedObjectId: persistedObjectId as String)
+    def auditEvent = new AuditLogEvent(eventName: eventType, className: className, persistedObjectId: persistedObjectId as String)
     if (oldeState) { auditEvent.oldState = oldeState }
     if (newState) { auditEvent.newState = newState }
     auditEvent.save(flush: true)
+    println( "${eventType}  for class ${className}  Id -> ${persistedObjectId}" )
     print('.')
     true
   }
