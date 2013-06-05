@@ -14,18 +14,17 @@ import groovy.transform.ToString
 
 @ToString
 class AuditLogEvent implements Serializable, Comparable {
-
-  String application
+  String application = "bates-plugin"
   String region = "US"
   String eventName
   String className
-  String persistedObjectId
+  String objectId
   Map<String, String> oldState
   Map<String, String> newState
-  Date dateCreated
+  Date dateCreated = new Date()
 
 
-  //METHODS
+//METHODS
   def getDiffMap() {
     def ignoreList = ['version', 'lastUpdated']
     StringBuilder sb = new StringBuilder();
@@ -43,7 +42,7 @@ class AuditLogEvent implements Serializable, Comparable {
   static constraints = {
     eventName(nullable:false)
     className(nullable:false)
-    persistedObjectId(nullable:false)
+    objectId(nullable:false)
     oldState(nullable: true)
     newState(nullable: true)
   }

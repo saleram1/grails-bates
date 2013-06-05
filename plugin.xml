@@ -1,4 +1,4 @@
-<plugin name='bates' version='0.26' grailsVersion='2.0 &gt; *'>
+<plugin name='bates' version='0.34' grailsVersion='2.0 &gt; *'>
   <author>Michael Salera</author>
   <authorEmail>mikesalera@mac.com</authorEmail>
   <title>Business Audit Trail Events System (BATES) Plugin</title>
@@ -30,7 +30,11 @@ build an Admin style front end to view and filter thru all log documents, for ex
       <dependency group='org.codehaus.gpars' name='gpars' version='1.0-beta-3' />
     </build>
   </dependencies>
-  <plugins />
+  <plugins>
+    <build>
+      <plugin group='org.grails.plugins' name='mongodb-morphia' version='0.8.2' />
+    </build>
+  </plugins>
   <runtimePluginRequirements>
     <plugin name='mongodbMorphia' version='0.8.2' />
   </runtimePluginRequirements>

@@ -1,6 +1,6 @@
 class BatesGrailsPlugin {
     // the plugin version
-    def version = "0.26"
+    def version = "0.34"
 
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.0 > *"

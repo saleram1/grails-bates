@@ -1,11 +1,12 @@
 package com.freerangeconsultants.plugins.bates.core
 
+
 import com.freerangeconsultants.plugins.bates.domain.AuditLogEvent
 
 /**
  * Log audit events from any persistence object to MongoDB sharded cluster
  *
- * @version 1.0
+ * @version 1.0.34
  * @author Mike Salera
  */
 class BusinessAuditLogService {
@@ -20,11 +21,17 @@ class BusinessAuditLogService {
    *
    * @param clazz                 Class object
    * @param persistedObjectId     id of the object caller is looking for
-   * @return
+   * @return   com.google.code.morphia.query.MorphiaIterator to navigate query results
    */
   def findAllLogEventsByClassAndId(Class clazz, persistedObjectId) {
-    return []
+    if (clazz && persistedObjectId) {
+      return AuditLogEvent.findAll(['className': clazz.name, 'objectId': persistedObjectId])
+    }
+    else {
+      return Collections.emptyList()
+    }
   }
+
 
   /**
    * This method used transparently from the audit( ) method injected into Domain classes
@@ -41,12 +48,14 @@ class BusinessAuditLogService {
    */
   def recordLogEvent(String eventType, String className, persistedObjectId, oldeState, newState) {
     //magic of the dataStore
-    def auditEvent = new AuditLogEvent(eventName: eventType, className: className, persistedObjectId: persistedObjectId as String)
+    def auditEvent = new AuditLogEvent(eventName: eventType, className: className, objectId: persistedObjectId as String)
     if (oldeState) { auditEvent.oldState = oldeState }
     if (newState) { auditEvent.newState = newState }
-    auditEvent.save(flush: true)
+
+    println( auditEvent.toString() )
     println( "${eventType}  for class ${className}  Id -> ${persistedObjectId}" )
-    print('.')
-    true
+
+    if (auditEvent.validate()) { return auditEvent.save(flush: true) }
+    false
   }
 }
