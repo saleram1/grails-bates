@@ -10,7 +10,7 @@ grails.project.dependency.resolution = {
         // excludes 'ehcache'
     }
 
-    log "info" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
+    log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
 
     repositories {
         grailsCentral()
@@ -35,6 +35,6 @@ grails.project.dependency.resolution = {
               ":rest-client-builder:1.0.2") {
             export = false
         }
-	build(":mongodb-morphia:0.8.2")
+		build(":mongodb-morphia:0.8.3")
     }
 }

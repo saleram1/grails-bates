@@ -1,4 +1,4 @@
-<plugin name='bates' version='0.34' grailsVersion='2.0 &gt; *'>
+<plugin name='bates' version='0.35' grailsVersion='2.0 &gt; *'>
   <author>Michael Salera</author>
   <authorEmail>mikesalera@mac.com</authorEmail>
   <title>Business Audit Trail Events System (BATES) Plugin</title>
@@ -22,7 +22,6 @@ build an Admin style front end to view and filter thru all log documents, for ex
   </resources>
   <repositories>
     <repository name='grailsCentral' url='http://grails.org/plugins' />
-    <repository name='http://repo.grails.org/grails/core' url='http://repo.grails.org/grails/core/' />
     <repository name='mavenCentral' url='http://repo1.maven.org/maven2/' />
   </repositories>
   <dependencies>
@@ -32,11 +31,11 @@ build an Admin style front end to view and filter thru all log documents, for ex
   </dependencies>
   <plugins>
     <build>
-      <plugin group='org.grails.plugins' name='mongodb-morphia' version='0.8.2' />
+      <plugin group='org.grails.plugins' name='mongodb-morphia' version='0.8.3' />
     </build>
   </plugins>
   <runtimePluginRequirements>
-    <plugin name='mongodbMorphia' version='0.8.2' />
+    <plugin name='mongodbMorphia' version='0.8.3' />
   </runtimePluginRequirements>
   <behavior />
 </plugin>
