@@ -23,7 +23,7 @@ VersionX-revision.h
 build/
 target/
 *.[oa]
-
+*.zip
 
 # Other source repository archive directories (protects when importing)
 .hg
