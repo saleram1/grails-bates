@@ -38,6 +38,7 @@ class BusinessAuditLogService {
    * where their static auditable = true
    *
    * This method sends an instance of AuditLogEvent to MongoDB
+   * assumes Morphia classes are mapped
    *
    * @param eventType
    * @param className          this.class.simpleName
@@ -47,15 +48,17 @@ class BusinessAuditLogService {
    * @return true on success
    */
   def recordLogEvent(String eventType, String className, persistedObjectId, oldeState, newState) {
-    //magic of the dataStore
     def auditEvent = new AuditLogEvent(eventName: eventType, className: className, objectId: persistedObjectId as String)
     if (oldeState) { auditEvent.oldState = oldeState }
     if (newState) { auditEvent.newState = newState }
 
-    println( auditEvent.toString() )
-    println( "${eventType}  for class ${className}  Id -> ${persistedObjectId}" )
 
-    if (auditEvent.validate()) { return auditEvent.save(flush: true) }
-    false
+    if (auditEvent?.validate()) {
+	    println( "${eventType}  for class ${className}  [Id] -> ${persistedObjectId}" )
+		return auditEvent.save(flush: true)
+	}
+    else {
+		false
+	}
   }
 }
