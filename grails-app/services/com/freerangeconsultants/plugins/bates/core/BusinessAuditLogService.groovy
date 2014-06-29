@@ -52,13 +52,16 @@ class BusinessAuditLogService {
     if (oldeState) { auditEvent.oldState = oldeState }
     if (newState) { auditEvent.newState = newState }
 
-
-    if (auditEvent?.validate()) {
-	    println( "${eventType}  for class ${className}  [Id] -> ${persistedObjectId}" )
+	try {
+		auditEvent.validate()
+		println( "${eventType}  for class ${className}  [Id] -> ${persistedObjectId}" )
 		return auditEvent.save(flush: true)
 	}
-    else {
-		false
+	catch (Exception ex) {	
+		System.err.println(auditEvent)
+		System.err.println("Caught ${ex.message}")
+		ex.printStackTrace()
 	}
+	false
   }
 }

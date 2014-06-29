@@ -1,5 +1,7 @@
 package com.freerangeconsultants.plugins.bates.domain
 
+import com.google.code.morphia.annotations.Entity
+import com.google.code.morphia.annotations.Id
 import groovy.transform.ToString
 
 /**
@@ -13,7 +15,11 @@ import groovy.transform.ToString
  */
 
 @ToString
+@Entity(value="audits", noClassnameStored=true)
 class AuditLogEvent implements Serializable, Comparable {
+
+  @Id
+  String uuid = UUID.randomUUID()
   String application = "bates-plugin"
   String region = "US"
   String eventName
@@ -40,9 +46,9 @@ class AuditLogEvent implements Serializable, Comparable {
   int compareTo(java.lang.Object anObject) { return id.compareTo(anObject.id) }
 
   static constraints = {
-    eventName(nullable:false)
-    className(nullable:false)
-    objectId(nullable:false)
+    eventName(nullable: false)
+    className(nullable: false)
+    objectId(nullable: false)
     oldState(nullable: true)
     newState(nullable: true)
   }
