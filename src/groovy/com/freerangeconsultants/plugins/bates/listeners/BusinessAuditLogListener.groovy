@@ -122,7 +122,7 @@ class BusinessAuditLogListener
     def map = [:]
     for (int i = 0; i < names.length; i++) {
       if (names[i]) {
-        map[names[i]] = state[i]
+        map[names[i]] = state ? state[i] : null
       }
     }
     sanitizeMap(map)
